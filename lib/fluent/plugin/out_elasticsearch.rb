@@ -1,6 +1,7 @@
 # encoding: UTF-8
 require 'net/http'
 require 'date'
+require 'socket'
 
 class Fluent::ElasticsearchOutput < Fluent::BufferedOutput
   Fluent::Plugin.register_output('elasticsearch', self)
@@ -41,13 +42,16 @@ class Fluent::ElasticsearchOutput < Fluent::BufferedOutput
     bulk_message = []
 
     chunk.msgpack_each do |tag, time, record|
-      if @logstash_format
-        record.merge!({"@timestamp" => Time.at(time).to_datetime.to_s})
-        target_index = "#{@logstash_prefix}-#{Time.at(time).getutc.strftime("#{@logstash_dateformat}")}"
-      else
-        target_index = @index_name
-      end
+      #if @logstash_format
+      #  record.merge!({"@timestamp" => Time.at(time).to_datetime.to_s})
+      #  target_index = "#{@logstash_prefix}-#{Time.at(time).getutc.strftime("#{@logstash_dateformat}")}"
+      #else
+      #  target_index = @index_name
+      #end
 
+      record.merge!({"@timestamp" => Time.at(time).to_datetime.to_s})
+      record.merge!({"@hostname" => Socket.gethostname})
+      
       if @include_tag_key
         record.merge!(@tag_key => tag)
       end
